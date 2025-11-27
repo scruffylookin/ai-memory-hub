@@ -26,6 +26,10 @@ export class AnchorsModule {
         this.filterCategory = 'all';
         this.searchQuery = '';
 
+        // Review session state
+        this.reviewDecisions = []; // Track approve/reject/skip decisions
+        this.reviewedInsights = new Set(); // Track which insights were reviewed
+
         // Read-only mode for safe initial deployment
         this.readOnly = true;
 
@@ -344,7 +348,525 @@ export class AnchorsModule {
      */
     startReview() {
         console.log('Starting insight review...');
-        alert('Insight review workflow coming soon!\n\nThis will allow you to:\n- Review pending insights one by one\n- See evidence from conversations\n- Approve as anchors or reject\n- Detect duplicates and conflicts');
+
+        if (this.pendingInsights.length === 0) {
+            alert('No insights to review!');
+            return;
+        }
+
+        // Sort pending insights by strength (highest first)
+        this.pendingInsights.sort((a, b) => {
+            const strengthA = a.strength || a.confidence || 0;
+            const strengthB = b.strength || b.confidence || 0;
+            return strengthB - strengthA;
+        });
+
+        this.currentView = 'review';
+        this.reviewIndex = 0;
+        this.reviewDecisions = [];
+        this.reviewedInsights = new Set();
+        this.renderReviewInterface();
+        this.setupKeyboardShortcuts();
+    }
+
+    /**
+     * Render the review interface
+     */
+    renderReviewInterface() {
+        const insight = this.pendingInsights[this.reviewIndex];
+        if (!insight) {
+            this.finishReview();
+            return;
+        }
+
+        const insightId = insight.id || insight.insight_id || `insight_${this.reviewIndex}`;
+        const insightText = insight.insight || insight.content || insight.statement || 'No content';
+        const category = insight.category || 'uncategorized';
+        const strength = insight.strength || insight.confidence || 0;
+        const firstSeen = insight.first_observed || insight.created || 'Unknown';
+        const lastSeen = insight.last_observed || insight.updated || 'Unknown';
+
+        // Get evidence (conversation sources)
+        const evidence = this.getInsightEvidence(insight);
+
+        // Check for similar anchors
+        const similarAnchors = this.findSimilarAnchors(insightText);
+
+        const progress = this.reviewIndex + 1;
+        const total = this.pendingInsights.length;
+        const progressPercent = (progress / total) * 100;
+
+        this.container.innerHTML = `
+            <div class="review-container">
+                <!-- Header with Progress -->
+                <div class="review-header">
+                    <button class="btn-link" data-action="exit-review">
+                        ← Back to Overview
+                    </button>
+                    <div class="review-progress">
+                        <span class="progress-text">${progress} of ${total}</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insight Card -->
+                <div class="insight-review-card">
+                    <div class="insight-header">
+                        <span class="insight-category-badge">${this.formatCategory(category)}</span>
+                        <span class="insight-id">${insightId}</span>
+                    </div>
+
+                    <div class="insight-statement">
+                        "${this.escapeHtml(insightText)}"
+                    </div>
+
+                    <div class="insight-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Confidence:</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${strength * 100}%"></div>
+                            </div>
+                            <span class="meta-value">${(strength * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">First Seen:</span>
+                            <span class="meta-value">${this.formatDate(firstSeen)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Last Seen:</span>
+                            <span class="meta-value">${this.formatDate(lastSeen)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Evidence Section -->
+                    <div class="evidence-section">
+                        <h4>📊 Evidence (${evidence.length} conversations)</h4>
+                        ${evidence.length > 0 ? `
+                            <div class="evidence-list">
+                                ${evidence.slice(0, 5).map(e => `
+                                    <div class="evidence-item">
+                                        <div class="evidence-date">${this.formatDate(e.date)}</div>
+                                        <div class="evidence-text">"${this.escapeHtml(e.text)}"</div>
+                                    </div>
+                                `).join('')}
+                                ${evidence.length > 5 ? `
+                                    <div class="evidence-more">
+                                        + ${evidence.length - 5} more conversations
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : `
+                            <div class="no-evidence">No specific evidence available</div>
+                        `}
+                    </div>
+
+                    <!-- Similar Anchors Warning -->
+                    ${similarAnchors.length > 0 ? `
+                        <div class="similarity-warning">
+                            <h4>⚠️ Similar Anchors Detected</h4>
+                            <div class="similar-anchors-list">
+                                ${similarAnchors.map(anchor => `
+                                    <div class="similar-anchor">
+                                        <div class="similarity-score">${(anchor.similarity * 100).toFixed(0)}% match</div>
+                                        <div class="similar-text">"${this.escapeHtml(anchor.statement)}"</div>
+                                        <div class="similar-meta">Created ${this.formatDate(anchor.created)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="similarity-note">
+                                This insight may be redundant. Consider if it adds new information.
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Action Buttons -->
+                    <div class="review-actions">
+                        <button class="btn btn-primary" data-action="approve-insight" data-id="${insightId}">
+                            ✓ Approve as Anchor
+                            <span class="kbd-hint">→</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="edit-and-approve" data-id="${insightId}">
+                            ✎ Edit & Approve
+                            <span class="kbd-hint">E</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="skip-insight" data-id="${insightId}">
+                            ↷ Skip for Later
+                            <span class="kbd-hint">↓</span>
+                        </button>
+                        <button class="btn btn-secondary danger" data-action="reject-insight" data-id="${insightId}">
+                            ✗ Reject Permanently
+                            <span class="kbd-hint">←</span>
+                        </button>
+                    </div>
+
+                    ${this.readOnly ? `
+                        <div class="review-notice">
+                            <strong>Read-Only Mode:</strong> Actions are simulated. No files will be modified.
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Navigation -->
+                <div class="review-navigation">
+                    <button class="btn btn-secondary" data-action="prev-insight" ${this.reviewIndex === 0 ? 'disabled' : ''}>
+                        ← Previous
+                    </button>
+                    <span class="nav-position">${progress} / ${total}</span>
+                    <button class="btn btn-secondary" data-action="next-insight" ${this.reviewIndex >= total - 1 ? 'disabled' : ''}>
+                        Next →
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Attach event listeners for review actions
+        this.attachReviewListeners();
+    }
+
+    /**
+     * Attach event listeners for review interface
+     */
+    attachReviewListeners() {
+        this.container.addEventListener('click', (e) => {
+            const action = e.target.closest('[data-action]')?.dataset.action;
+            const id = e.target.closest('[data-id]')?.dataset.id;
+
+            if (!action) return;
+
+            switch (action) {
+                case 'exit-review':
+                    this.exitReview();
+                    break;
+                case 'approve-insight':
+                    this.approveInsight(id);
+                    break;
+                case 'edit-and-approve':
+                    this.editAndApprove(id);
+                    break;
+                case 'skip-insight':
+                    this.skipInsight(id);
+                    break;
+                case 'reject-insight':
+                    this.rejectInsight(id);
+                    break;
+                case 'prev-insight':
+                    this.navigateReview(-1);
+                    break;
+                case 'next-insight':
+                    this.navigateReview(1);
+                    break;
+            }
+        });
+    }
+
+    /**
+     * Setup keyboard shortcuts for review
+     */
+    setupKeyboardShortcuts() {
+        this.keyHandler = (e) => {
+            if (this.currentView !== 'review') return;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    this.approveInsight();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    this.rejectInsight();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.skipInsight();
+                    break;
+                case 'e':
+                case 'E':
+                    e.preventDefault();
+                    this.editAndApprove();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    this.exitReview();
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', this.keyHandler);
+    }
+
+    /**
+     * Remove keyboard shortcuts
+     */
+    removeKeyboardShortcuts() {
+        if (this.keyHandler) {
+            document.removeEventListener('keydown', this.keyHandler);
+            this.keyHandler = null;
+        }
+    }
+
+    /**
+     * Get evidence for an insight
+     */
+    getInsightEvidence(insight) {
+        // Extract evidence from insight data
+        const evidence = [];
+
+        if (insight.evidence && Array.isArray(insight.evidence)) {
+            return insight.evidence.map(e => ({
+                date: e.timestamp || e.date || e.chat_timestamp,
+                text: e.excerpt || e.text || e.content || 'Evidence text'
+            }));
+        }
+
+        // Fallback: create mock evidence from metadata
+        if (insight.source_conversations && Array.isArray(insight.source_conversations)) {
+            return insight.source_conversations.slice(0, 5).map(conv => ({
+                date: conv.timestamp || conv.date,
+                text: `Referenced in conversation ${conv.id || 'unknown'}`
+            }));
+        }
+
+        return evidence;
+    }
+
+    /**
+     * Find similar existing anchors
+     */
+    findSimilarAnchors(insightText) {
+        const similar = [];
+        const insightWords = new Set(
+            insightText.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .split(/\s+/)
+                .filter(w => w.length > 3)
+        );
+
+        for (const anchor of this.anchors) {
+            const anchorWords = new Set(
+                anchor.statement.toLowerCase()
+                    .replace(/[^\w\s]/g, '')
+                    .split(/\s+/)
+                    .filter(w => w.length > 3)
+            );
+
+            // Calculate Jaccard similarity
+            const intersection = new Set([...insightWords].filter(w => anchorWords.has(w)));
+            const union = new Set([...insightWords, ...anchorWords]);
+            const similarity = intersection.size / union.size;
+
+            if (similarity > 0.4) { // 40% similarity threshold
+                similar.push({
+                    ...anchor,
+                    similarity
+                });
+            }
+        }
+
+        return similar.sort((a, b) => b.similarity - a.similarity);
+    }
+
+    /**
+     * Navigate through review items
+     */
+    navigateReview(delta) {
+        const newIndex = this.reviewIndex + delta;
+        if (newIndex >= 0 && newIndex < this.pendingInsights.length) {
+            this.reviewIndex = newIndex;
+            this.renderReviewInterface();
+        }
+    }
+
+    /**
+     * Approve insight as anchor
+     */
+    approveInsight(id) {
+        const insight = this.pendingInsights[this.reviewIndex];
+        const insightId = id || insight.id || insight.insight_id || `insight_${this.reviewIndex}`;
+
+        console.log('Approving insight:', insightId);
+
+        this.reviewDecisions.push({
+            insightId,
+            action: 'approve',
+            statement: insight.insight || insight.content,
+            category: insight.category,
+            timestamp: new Date().toISOString()
+        });
+
+        this.reviewedInsights.add(insightId);
+
+        // Show feedback
+        this.showFeedback('✓ Would create anchor (read-only mode)', 'success');
+
+        // Move to next
+        setTimeout(() => this.navigateReview(1), 800);
+    }
+
+    /**
+     * Skip insight for later review
+     */
+    skipInsight(id) {
+        const insight = this.pendingInsights[this.reviewIndex];
+        const insightId = id || insight.id || insight.insight_id || `insight_${this.reviewIndex}`;
+
+        console.log('Skipping insight:', insightId);
+
+        this.reviewDecisions.push({
+            insightId,
+            action: 'skip',
+            timestamp: new Date().toISOString()
+        });
+
+        this.showFeedback('↷ Skipped for later review', 'info');
+        setTimeout(() => this.navigateReview(1), 500);
+    }
+
+    /**
+     * Reject insight permanently
+     */
+    rejectInsight(id) {
+        const insight = this.pendingInsights[this.reviewIndex];
+        const insightId = id || insight.id || insight.insight_id || `insight_${this.reviewIndex}`;
+
+        console.log('Rejecting insight:', insightId);
+
+        this.reviewDecisions.push({
+            insightId,
+            action: 'reject',
+            statement: insight.insight || insight.content,
+            category: insight.category,
+            timestamp: new Date().toISOString()
+        });
+
+        this.reviewedInsights.add(insightId);
+
+        this.showFeedback('✗ Would reject permanently (read-only mode)', 'warning');
+        setTimeout(() => this.navigateReview(1), 800);
+    }
+
+    /**
+     * Edit and approve insight
+     */
+    editAndApprove(id) {
+        const insight = this.pendingInsights[this.reviewIndex];
+        const insightId = id || insight.id || insight.insight_id || `insight_${this.reviewIndex}`;
+        const currentText = insight.insight || insight.content || '';
+
+        const newText = prompt('Edit insight text:', currentText);
+
+        if (newText && newText !== currentText) {
+            console.log('Editing and approving:', insightId, newText);
+
+            this.reviewDecisions.push({
+                insightId,
+                action: 'approve_edited',
+                original: currentText,
+                statement: newText,
+                category: insight.category,
+                timestamp: new Date().toISOString()
+            });
+
+            this.reviewedInsights.add(insightId);
+            this.showFeedback('✓ Would create edited anchor (read-only mode)', 'success');
+            setTimeout(() => this.navigateReview(1), 800);
+        }
+    }
+
+    /**
+     * Show feedback message
+     */
+    showFeedback(message, type = 'info') {
+        const colors = {
+            success: '#30D158',
+            warning: '#FF9F0A',
+            error: '#FF453A',
+            info: '#0A84FF'
+        };
+
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: ${colors[type]};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+
+        setTimeout(() => {
+            feedback.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => feedback.remove(), 300);
+        }, 2000);
+    }
+
+    /**
+     * Exit review and return to overview
+     */
+    exitReview() {
+        this.removeKeyboardShortcuts();
+        this.currentView = 'overview';
+
+        // Show summary if any decisions were made
+        if (this.reviewDecisions.length > 0) {
+            const approved = this.reviewDecisions.filter(d => d.action === 'approve' || d.action === 'approve_edited').length;
+            const rejected = this.reviewDecisions.filter(d => d.action === 'reject').length;
+            const skipped = this.reviewDecisions.filter(d => d.action === 'skip').length;
+
+            console.log('Review session complete:', {
+                approved,
+                rejected,
+                skipped,
+                decisions: this.reviewDecisions
+            });
+
+            alert(`Review Session Summary:\n\n✓ Approved: ${approved}\n✗ Rejected: ${rejected}\n↷ Skipped: ${skipped}\n\n(Read-only mode - no changes saved)`);
+        }
+
+        this.render();
+    }
+
+    /**
+     * Finish review when all insights processed
+     */
+    finishReview() {
+        this.removeKeyboardShortcuts();
+        this.currentView = 'overview';
+
+        const approved = this.reviewDecisions.filter(d => d.action === 'approve' || d.action === 'approve_edited').length;
+        const rejected = this.reviewDecisions.filter(d => d.action === 'reject').length;
+        const skipped = this.reviewDecisions.filter(d => d.action === 'skip').length;
+
+        alert(`Review Complete!\n\n✓ Approved: ${approved}\n✗ Rejected: ${rejected}\n↷ Skipped: ${skipped}\n\nAll insights have been reviewed.\n\n(Read-only mode - no changes saved)`);
+
+        this.render();
+    }
+
+    /**
+     * Format date for display
+     */
+    formatDate(dateString) {
+        if (!dateString || dateString === 'Unknown') return 'Unknown';
+
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return dateString;
+        }
     }
 
     /**

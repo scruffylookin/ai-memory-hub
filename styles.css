@@ -1694,3 +1694,329 @@ input:checked + .slider:before {
     color: var(--text-secondary);
     margin-bottom: 25px;
 }
+
+/* ============================================
+   Review Interface Styles
+   ============================================ */
+
+.review-container {
+    padding: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    overflow-y: auto;
+    height: calc(100vh - 110px);
+}
+
+/* Review Header */
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.review-progress {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.progress-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 80px;
+    text-align: right;
+}
+
+.progress-bar {
+    width: 200px;
+    height: 8px;
+    background: var(--messages-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+/* Insight Review Card */
+.insight-review-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.insight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.insight-category-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insight-id {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.insight-statement {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: var(--messages-bg);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 8px;
+}
+
+.insight-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+/* Confidence Bar */
+.confidence-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--messages-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF453A 0%, #FF9F0A 50%, #30D158 100%);
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+/* Evidence Section */
+.evidence-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: var(--messages-bg);
+    border-radius: 12px;
+}
+
+.evidence-section h4 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.evidence-item {
+    padding: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.evidence-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(10, 132, 255, 0.1);
+}
+
+.evidence-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.evidence-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.evidence-more {
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.no-evidence {
+    padding: 15px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Similarity Warning */
+.similarity-warning {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(255, 159, 10, 0.1);
+    border: 2px solid var(--error-color);
+    border-radius: 12px;
+}
+
+.similarity-warning h4 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: var(--error-color);
+}
+
+.similar-anchors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.similar-anchor {
+    padding: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.similarity-score {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--error-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.similar-text {
+    font-size: 14px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.similar-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.similarity-note {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Review Actions */
+.review-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.kbd-hint {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--messages-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    margin-left: 6px;
+    opacity: 0.7;
+}
+
+.review-notice {
+    padding: 12px;
+    background: var(--messages-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Review Navigation */
+.review-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.nav-position {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Feedback Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
