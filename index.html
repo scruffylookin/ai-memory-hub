@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Memory Hub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- App Header -->
+        <header class="app-header">
+            <h1>AI Memory Hub</h1>
+            <div class="theme-switcher">
+                <span>Light</span>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+                <span>Dark</span>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="conversations">
+                💬 Conversations
+            </button>
+            <button class="tab-btn" data-tab="insights">
+                💡 Insights
+            </button>
+        </nav>
+
+        <!-- Tab Content Areas -->
+        <div id="conversations-tab" class="tab-content active">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="header-top">
+                        <h2>Conversations</h2>
+                    </div>
+                    <div class="sync-status">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Stats Summary -->
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Conversations</span>
+                        <span class="stat-value" id="total-conversations">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Messages</span>
+                        <span class="stat-value" id="total-messages">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Last Sync</span>
+                        <span class="stat-value" id="last-sync">-</span>
+                    </div>
+                </div>
+
+                <!-- Tool Filters -->
+                <div class="filters">
+                    <h3>Filter by Tool</h3>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-tool="all">All</button>
+                        <button class="filter-btn" data-tool="claude">Claude</button>
+                        <button class="filter-btn" data-tool="gemini">Gemini</button>
+                    </div>
+                </div>
+
+                <!-- Conversation List -->
+                <div class="conversation-list">
+                    <h3>Conversations</h3>
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search conversations...">
+                    </div>
+                    <div class="conversation-items" id="conversation-items">
+                        <!-- Conversations will be loaded here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Conversation Header -->
+                <div class="conversation-header" id="conversation-header">
+                    <div class="conversation-info">
+                        <h2 id="conversation-title">Select a conversation</h2>
+                        <div class="conversation-meta">
+                            <span class="meta-item" id="conversation-tool"></span>
+                            <span class="meta-item" id="conversation-date"></span>
+                            <span class="meta-item" id="message-count"></span>
+                        </div>
+                        <div class="conversation-tags" id="conversation-tags"></div>
+                    </div>
+                    <button class="toggle-metadata-btn" id="toggle-metadata">
+                        Show Metadata
+                    </button>
+                </div>
+
+                <!-- Messages Area -->
+                <div class="messages-container" id="messages-container">
+                    <div class="welcome-message">
+                        <h2>Welcome to AI Memory Hub</h2>
+                        <p>Select a conversation from the sidebar to view messages</p>
+                    </div>
+                </div>
+
+                <!-- Metadata Panel (Hidden by default) -->
+                <div class="metadata-panel hidden" id="metadata-panel">
+                    <h3>Conversation Metadata</h3>
+                    <div class="metadata-content" id="metadata-content">
+                        <!-- Metadata will be loaded here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="insights-tab" class="tab-content hidden">
+            <!-- Dashboard Container -->
+            <div class="insights-container">
+                <!-- Dashboard Metrics -->
+                <div id="dashboard">
+                    <div id="metrics">
+                        <div class="metric">
+                            <h3>Total Insights</h3>
+                            <p id="total-insights">0</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Recent (7 days)</h3>
+                            <p id="recent-insights">0</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Active Categories</h3>
+                            <p id="active-categories">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Layout -->
+                <div class="two-column-layout">
+                    <div id="recent-memories">
+                        <h2>Recent Memories</h2>
+                        <ul id="recent-memories-list"></ul>
+                    </div>
+                    <div id="topic-cloud">
+                        <h2>Topic Cloud</h2>
+                        <div class="relevancy-controls">
+                            <button class="relevancy-btn active" data-mode="recency">Recency</button>
+                            <button class="relevancy-btn" data-mode="strength">Strength</button>
+                            <button class="relevancy-btn" data-mode="weakness">Weakness</button>
+                        </div>
+                        <div id="topic-cloud-container"></div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Chart -->
+                <section id="category-chart-section">
+                    <h2>Category Distribution</h2>
+                    <div id="category-chart"></div>
+                </section>
+
+                <!-- Timeline Graph -->
+                <section id="timeline-view">
+                    <h2>Insight Timeline</h2>
+                    <div id="timeline-graph"></div>
+                </section>
+
+                <!-- Table View -->
+                <section id="table-view">
+                    <h2>All Insights</h2>
+                    <div id="filter-controls">
+                        <input type="text" id="insights-search-input" placeholder="Search insights...">
+                        <div id="filters-container">
+                            <select id="category-filter">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="source-filter">
+                                <option value="">All Sources</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="insights-table-container"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Floating Context Panel (bi-directional linking) -->
+        <div id="context-panel" class="context-panel hidden">
+            <div class="context-panel-header">
+                <h3 id="context-panel-title"></h3>
+                <div class="context-panel-controls">
+                    <button id="context-panel-pin" class="context-pin-btn" title="Pin panel">📌</button>
+                    <button id="context-panel-close" class="context-close-btn">×</button>
+                </div>
+            </div>
+            <div class="context-panel-content" id="context-panel-content"></div>
+        </div>
+
+        <!-- Topic Popup (for hierarchical display) -->
+        <div id="topic-popup" class="topic-popup hidden">
+            <div class="topic-popup-header">
+                <h3 id="topic-popup-title"></h3>
+                <button id="topic-popup-close">×</button>
+            </div>
+            <div class="topic-popup-content" id="topic-popup-content"></div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
