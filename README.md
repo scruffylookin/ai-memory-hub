@@ -1,6 +1,6 @@
 # AI Memory Hub
 
-A unified, visually appealing web application for exploring AI conversation archives and synthesized insights. Combines conversation browsing with advanced insight visualization and bi-directional linking between conversations and insights.
+A unified, visually appealing web application for exploring AI conversation archives, synthesized insights, and managing user-confirmed preferences (anchors). Combines conversation browsing with advanced insight visualization, bi-directional linking, and anchor management.
 
 ## Features
 
@@ -30,6 +30,20 @@ A unified, visually appealing web application for exploring AI conversation arch
   - Filter by category and source
   - Sort by any column
 - **Bi-directional Linking**: Hover over insights to see source conversations
+
+### Anchors Tab ⚓ NEW
+- **Anchor Management**: View and manage user-confirmed preferences and insights
+- **Statistics Dashboard**: Active anchors, pending reviews, total insights, rejected items
+- **Attention Alerts**: Notifications when insights need review (CLAUDE.md alerts coming soon)
+- **Categorized Display**: Anchors grouped by category (preferences, working style, technical, etc.)
+- **Anchor Details**: View creation date, source (elevated from insight, manual, baseline), and notes
+- **Read-Only Mode**: Safe viewing of anchors without modification (Phase 1)
+- **Coming Soon**:
+  - Insight review workflow (approve/reject pending insights)
+  - Elevate insights to anchors
+  - Edit and archive anchors
+  - CLAUDE.md generation from anchors
+  - Manual anchor creation
 
 ### Design & User Experience
 - **Dark Mode by Default**: Professional dark theme with toggle switch
@@ -178,6 +192,32 @@ The context panel creates powerful links between conversations and insights:
 - **Close (×)**: Click to hide panel
 - Panel auto-hides after 500ms when unpinned
 
+### Anchors Tab
+
+1. **Overview Dashboard**:
+   - View statistics: active anchors, pending reviews, total insights, rejected items
+   - See attention alerts when action is needed
+
+2. **Browse Anchors**:
+   - Anchors organized by category (preferences, working style, technical expertise, etc.)
+   - Each anchor shows:
+     - Statement (the confirmed preference or fact)
+     - Creation date
+     - Source (elevated from insight, manually created, or baseline-validated)
+     - Optional notes
+   - View, edit, and archive actions (currently disabled in read-only mode)
+
+3. **Insight Review** (Coming Soon):
+   - Review pending insights one-by-one
+   - See evidence from conversations
+   - Approve as anchors or reject permanently
+   - Detect duplicate and conflicting anchors
+
+4. **Current Limitations**:
+   - **Read-only mode**: Anchors can be viewed but not modified yet
+   - Write operations (elevate, edit, archive) coming in Phase 2
+   - CLAUDE.md generation coming in Phase 3
+
 ### Theme Toggle
 
 - **Light/Dark Switch**: Located in the header
@@ -189,15 +229,17 @@ The context panel creates powerful links between conversations and insights:
 
 ```
 ai-memory-hub/
-├── index.html              # Main application entry point
-├── styles.css              # Unified stylesheet with dark mode
-├── app.js                  # Main application controller
+├── index.html                  # Main application entry point
+├── styles.css                  # Unified stylesheet with dark mode
+├── app.js                      # Main application controller
 ├── modules/
-│   ├── conversations.js    # Conversation viewing module
-│   ├── insights.js         # Insights visualization module
-│   ├── theme.js            # Theme management
-│   └── contextPanel.js     # Bi-directional linking panel
-└── README.md               # This file
+│   ├── conversations.js        # Conversation viewing module
+│   ├── insights.js             # Insights visualization module
+│   ├── anchors.js              # Anchor management module (NEW)
+│   ├── theme.js                # Theme management
+│   └── contextPanel.js         # Bi-directional linking panel
+├── README.md                   # This file
+└── ANCHORS_IMPLEMENTATION.md   # Anchor feature documentation
 ```
 
 ## Data Sources
@@ -206,6 +248,8 @@ The application reads from:
 - **Conversations**: `../ai-memory-sync/sync-status.json` and conversation archives
 - **Insights**: `../ai-memory-sync/state/insights/insights.json` (primary)
   - Fallback: `../ai-insight-synthesizer/state/insights.json`
+- **Anchors**: `../ai-memory-sync/state/insights/anchors.json` (NEW)
+- **Rejected Insights**: `../ai-memory-sync/state/insights/rejected-insights.json` (NEW)
 
 ## Customization
 
@@ -275,6 +319,14 @@ Key layout dimensions in `styles.css`:
 - Clear browser cache and reload
 - Manually set theme preference in localStorage
 
+### Anchors not loading
+
+- Check that anchors.json exists in:
+  - `ai-memory-sync/state/insights/anchors.json`
+- If file doesn't exist, you'll see an empty state (this is normal)
+- Sample anchors.json is created automatically
+- Verify the JSON structure is correct
+
 ## Browser Support
 
 - **Chrome/Edge**: ✅ Full support
@@ -310,14 +362,47 @@ Key layout dimensions in `styles.css`:
 - **Lazy Loading**: Tab content loads only when first accessed
 - **Responsive**: Uses CSS Grid and Flexbox for responsive layouts
 
-## Future Enhancements
+## Roadmap
 
-Potential features for future versions:
-- **Global Search**: Search across both conversations and insights simultaneously
+### Anchors Tab - Planned Features
+
+**Phase 2: Insight Review Workflow** (Next)
+- Review pending insights one-by-one
+- View evidence from conversations
+- Approve insights as anchors
+- Reject insights permanently
+- Detect similar/duplicate anchors
+- Keyboard shortcuts for efficient review
+
+**Phase 3: Write Operations**
+- Node.js API server for safe file writes
+- Automatic backups before any modification
+- Elevate insights to anchors
+- Edit existing anchors
+- Archive anchors (preserve history)
+- Manual anchor creation
+
+**Phase 4: CLAUDE.md Generation**
+- Generate CLAUDE.md from anchors + high-strength insights
+- Live preview before writing
+- Template customization
+- Version tracking
+- Auto-regeneration triggers
+
+**Phase 5: Advanced Features**
+- Conflict detection and resolution
+- Anchor validation reminders
+- Search and filtering
+- Bulk operations
+- Import/export anchors
+
+### Other Future Enhancements
+
+- **Global Search**: Search across conversations, insights, and anchors simultaneously
 - **Export Functionality**: Export conversations to Markdown, insights to CSV/JSON
-- **Advanced Analytics**: Combined stats from conversations and insights
+- **Advanced Analytics**: Combined stats from conversations, insights, and anchors
 - **Timeline Sync**: Link conversation timeline with insight timeline
-- **Network Visualization**: Show relationships between insights and conversations
+- **Network Visualization**: Show relationships between insights, anchors, and conversations
 - **Filters**: More advanced filtering options (date ranges, strength thresholds)
 - **Bookmarks**: Save favorite conversations or insights
 - **Notes**: Add personal notes to conversations or insights
@@ -339,6 +424,27 @@ Found a bug or have a feature request? Feel free to modify and enhance!
 
 ---
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Last Updated**: November 2025
 **Author**: Built with Claude Code
+
+## Changelog
+
+### Version 1.1.0 (2025-11-26)
+- **NEW**: Anchors tab for managing user-confirmed preferences
+  - View anchors grouped by category
+  - Statistics dashboard for anchors, pending reviews, insights
+  - Attention alerts for items needing review
+  - Read-only mode for safe viewing (Phase 1)
+- Added anchors.js module
+- Added comprehensive anchor styling
+- Created sample anchors.json with test data
+- Updated documentation
+
+### Version 1.0.0 (2025-11)
+- Initial release
+- Conversations tab with iMessage-style interface
+- Insights tab with D3 visualizations
+- Bi-directional linking via context panel
+- Dark mode with theme toggle
+- Multi-tool support (Claude, Gemini)

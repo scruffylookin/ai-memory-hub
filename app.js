@@ -4,6 +4,7 @@
 import { ThemeManager } from './modules/theme.js';
 import { ConversationsModule } from './modules/conversations.js';
 import { InsightsModule } from './modules/insights.js';
+import { AnchorsModule } from './modules/anchors.js';
 import { ContextPanel } from './modules/contextPanel.js';
 
 class AIMemoryHub {
@@ -12,6 +13,7 @@ class AIMemoryHub {
         this.themeManager = null;
         this.conversationsModule = null;
         this.insightsModule = null;
+        this.anchorsModule = null;
         this.contextPanel = null;
     }
 
@@ -123,6 +125,15 @@ class AIMemoryHub {
                 console.log('Insights module loaded successfully!');
                 } else if (render) {
                     this.insightsModule.renderIfNeeded();
+                }
+
+            } else if (tabName === 'anchors') {
+                if (!this.anchorsModule) {
+                    console.log('Loading anchors module...');
+                    const container = document.getElementById('anchors-tab');
+                    this.anchorsModule = new AnchorsModule(container, this.contextPanel);
+                    await this.anchorsModule.init();
+                    console.log('Anchors module loaded successfully!');
                 }
             }
         } catch (error) {
